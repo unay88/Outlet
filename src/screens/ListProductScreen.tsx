@@ -136,11 +136,6 @@ export default function ListProductScreen({ onBack, onAdd, onSelect }: Props) {
         </ScrollView>
       )}
 
-      {!loading && !error && items.length > 0 && (
-        <TouchableOpacity style={styles.fab} onPress={onAdd} activeOpacity={0.85}>
-          <Text style={styles.fabIcon}>+</Text>
-        </TouchableOpacity>
-      )}
     </SafeAreaView>
   );
 }
@@ -208,13 +203,4 @@ const styles = StyleSheet.create({
   stateText: { fontSize: 14, color: colors.muted, textAlign: 'center', paddingHorizontal: 32 },
   retryBtn: { backgroundColor: BG, borderRadius: 12, paddingHorizontal: 24, paddingVertical: 10 },
   retryText: { color: colors.white, fontWeight: '700', fontSize: 14 },
-
-  fab: {
-    position: 'absolute', bottom: 28, right: 24,
-    width: 56, height: 56, borderRadius: 28,
-    backgroundColor: BG, alignItems: 'center', justifyContent: 'center',
-    shadowColor: BG, shadowOffset: { width: 0, height: 4 },
-    shadowOpacity: 0.4, shadowRadius: 8, elevation: 8,
-  },
-  fabIcon: { fontSize: 28, color: colors.white, lineHeight: 32, fontWeight: '300' },
 });

@@ -4,9 +4,8 @@ import {
   ActivityIndicator, Alert, StyleSheet, Text, Image,
 } from 'react-native';
 import AppText from '../components/atoms/AppText';
-import FloatingLabelInput from '../components/atoms/FloatingLabelInput';
 import ScreenHeader from '../components/atoms/ScreenHeader';
-import { getProductById, deleteProduct, updateProductStock, Product } from '../api/products';
+import { getProductById, deleteProduct, Product } from '../api/products';
 import { colors } from '../theme';
 
 type Props = {
@@ -21,8 +20,6 @@ export default function DetailProductScreen({ productId, onBack, onEdit, onDelet
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [deleting, setDeleting] = useState(false);
-  const [stockInput, setStockInput] = useState('');
-  const [updatingStock, setUpdatingStock] = useState(false);
 
   useEffect(() => { fetchData(); }, [productId]);
 
@@ -32,35 +29,6 @@ export default function DetailProductScreen({ productId, onBack, onEdit, onDelet
       setItem(await getProductById(productId));
     } catch (e: any) { setError(e.message ?? 'Gagal memuat data'); }
     finally { setLoading(false); }
-  }
-
-  function confirmUpdateStock() {
-    const qty = parseFloat(stockInput);
-    if (!stockInput.trim() || isNaN(qty) || qty === 0) {
-      Alert.alert('Validasi', 'Masukkan jumlah stok yang valid (boleh negatif untuk pengurangan).');
-      return;
-    }
-    const label = qty > 0 ? `+${qty}` : `${qty}`;
-    Alert.alert(
-      'Konfirmasi Update Stok',
-      `Stok "${item?.name ?? item?.code}" akan diubah ${label} dari ${item?.stock ?? 0} menjadi ${(item?.stock ?? 0) + qty}.`,
-      [
-        { text: 'Batal', style: 'cancel' },
-        { text: 'Update', onPress: handleUpdateStock },
-      ],
-    );
-  }
-
-  async function handleUpdateStock() {
-    const qty = parseFloat(stockInput);
-    try {
-      setUpdatingStock(true);
-      const updated = await updateProductStock(productId, qty);
-      setItem(updated);
-      setStockInput('');
-    } catch (e: any) {
-      Alert.alert('Gagal Update Stok', e.message ?? 'Terjadi kesalahan.');
-    } finally { setUpdatingStock(false); }
   }
 
   function confirmDelete() {
@@ -132,31 +100,6 @@ export default function DetailProductScreen({ productId, onBack, onEdit, onDelet
             ))}
           </View>
 
-          {/* Update Stock */}
-          <AppText style={styles.sectionLabel}>UPDATE STOK</AppText>
-          <View style={styles.card}>
-            <View style={styles.stockRow}>
-              <FloatingLabelInput
-                label="Tambah / Kurang Stok"
-                placeholder="contoh: 10 atau -5"
-                value={stockInput}
-                onChangeText={setStockInput}
-                keyboardType="numeric"
-                style={styles.stockInput}
-              />
-              <TouchableOpacity
-                style={[styles.stockBtn, updatingStock && styles.fabDisabled]}
-                onPress={confirmUpdateStock}
-                activeOpacity={0.85}
-                disabled={updatingStock}
-              >
-                {updatingStock
-                  ? <ActivityIndicator color={colors.white} size="small" />
-                  : <AppText style={styles.stockBtnText}>Update</AppText>}
-              </TouchableOpacity>
-            </View>
-          </View>
-
           {/* Details / komposisi */}
           {item.details.length > 0 && (
             <>
@@ -184,16 +127,6 @@ export default function DetailProductScreen({ productId, onBack, onEdit, onDelet
         </ScrollView>
       ) : null}
 
-      {item && (
-        <View style={styles.fabGroup}>
-          <TouchableOpacity style={[styles.fab, styles.fabDelete, deleting && styles.fabDisabled]} onPress={confirmDelete} activeOpacity={0.85} disabled={deleting}>
-            {deleting ? <ActivityIndicator color={colors.white} size="small" /> : <Image source={require('../assets/Iconly/Curved/Vector (1) copy.png')} style={styles.fabIcon} resizeMode="contain" />}
-          </TouchableOpacity>
-          <TouchableOpacity style={styles.fab} onPress={() => onEdit?.(item)} activeOpacity={0.85}>
-            <Image source={require('../assets/Iconly/Curved/Vector copy.png')} style={styles.fabIcon} resizeMode="contain" />
-          </TouchableOpacity>
-        </View>
-      )}
     </SafeAreaView>
   );
 }
@@ -223,14 +156,6 @@ const styles = StyleSheet.create({
   stateText: { fontSize: 14, color: colors.muted, textAlign: 'center', paddingHorizontal: 32 },
   retryBtn: { backgroundColor: colors.primary, borderRadius: 12, paddingHorizontal: 24, paddingVertical: 10 },
   retryText: { color: colors.white, fontWeight: '700', fontSize: 14 },
-  stockRow: { flexDirection: 'row', alignItems: 'flex-end', gap: 10, padding: 16 },
-  stockInput: { flex: 1 },
-  stockBtn: {
-    backgroundColor: colors.primary, borderRadius: 12,
-    paddingHorizontal: 18, paddingVertical: 14,
-    alignItems: 'center', justifyContent: 'center',
-  },
-  stockBtnText: { color: colors.white, fontWeight: '700', fontSize: 14 },
   fabGroup: { position: 'absolute', bottom: 28, right: 24, gap: 12 },
   fab: {
     width: 56, height: 56, borderRadius: 28,

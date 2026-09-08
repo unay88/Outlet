@@ -24,8 +24,11 @@ export type Product = {
 
 type ApiResponse<T> = { success: boolean; data: T; message?: string };
 
-export async function getProducts(): Promise<Product[]> {
-  const res = await fetch(`${BASE_URL}/api/products`);
+export async function getProducts(outlet?: string): Promise<Product[]> {
+  const url = outlet
+    ? `${BASE_URL}/api/products?outlet=${encodeURIComponent(outlet)}`
+    : `${BASE_URL}/api/products`;
+  const res = await fetch(url);
   if (!res.ok) throw new Error(`HTTP ${res.status}`);
   const json: ApiResponse<Product[]> = await res.json();
   if (!json.success) throw new Error('Failed to fetch products');

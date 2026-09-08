@@ -118,6 +118,7 @@ export default function App() {
         onBack={() => navigate('dashboard')}
         onAdd={() => navigate('formProduct')}
         onSelect={id => { setSelectedProductId(id); navigate('detailProduct'); }}
+        outlet={selectedOutlet ?? undefined}
       />;
     if (screen === 'detailStockMove') {
       if (stockMoveDetailType === 'move' && selectedStockMove)

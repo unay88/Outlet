@@ -17,9 +17,10 @@ type Props = {
   onBack?: () => void;
   onAdd?: () => void;
   onSelect?: (id: string) => void;
+  outlet?: string;
 };
 
-export default function ListProductScreen({ onBack, onAdd, onSelect }: Props) {
+export default function ListProductScreen({ onBack, onAdd, onSelect, outlet }: Props) {
   const [items, setItems] = useState<Product[]>([]);
   const [loading, setLoading] = useState(true);
   const [refreshing, setRefreshing] = useState(false);
@@ -31,7 +32,7 @@ export default function ListProductScreen({ onBack, onAdd, onSelect }: Props) {
     try {
       isRefresh ? setRefreshing(true) : setLoading(true);
       setError(null);
-      setItems(await getProducts());
+      setItems(await getProducts(outlet));
     } catch (e: any) {
       setError(e.message ?? 'Gagal memuat data');
     } finally {

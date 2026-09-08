@@ -13,11 +13,10 @@ import { colors } from '../theme';
 
 type OrderItem = { product_id: string; qty_req: string };
 
-type Props = { onBack?: () => void; onSuccess?: () => void };
+type Props = { onBack?: () => void; onSuccess?: () => void; outlet?: string };
 
-export default function FormOrderScreen({ onBack, onSuccess }: Props) {
+export default function FormOrderScreen({ onBack, onSuccess, outlet }: Props) {
   const [code, setCode] = useState('');
-  const [reqBy, setReqBy] = useState('');
   const [notes, setNotes] = useState('');
   const [items, setItems] = useState<OrderItem[]>([]);
   const [products, setProducts] = useState<Product[]>([]);
@@ -25,8 +24,8 @@ export default function FormOrderScreen({ onBack, onSuccess }: Props) {
   const [expandedRow, setExpandedRow] = useState<number | null>(null);
 
   useEffect(() => {
-    getProducts().then(setProducts).catch(() => {});
-  }, []);
+    getProducts(outlet).then(setProducts).catch(() => {});
+  }, [outlet]);
 
   function addItem() {
     setItems(prev => [...prev, { product_id: '', qty_req: '' }]);
@@ -52,7 +51,7 @@ export default function FormOrderScreen({ onBack, onSuccess }: Props) {
       setLoading(true);
       await createRequest({
         code: code.trim() || undefined,
-        req_by: reqBy.trim() || undefined,
+        req_by: outlet ?? undefined,
         notes: notes.trim() || undefined,
         items: items.map(i => ({ product_id: i.product_id, qty_req: parseFloat(i.qty_req) })),
       });
@@ -70,7 +69,7 @@ export default function FormOrderScreen({ onBack, onSuccess }: Props) {
       <KeyboardAvoidingView style={{ flex: 1 }} behavior={Platform.OS === 'ios' ? 'padding' : 'height'} keyboardVerticalOffset={Platform.OS === 'ios' ? 0 : 24}>
         <ScrollView contentContainerStyle={styles.scroll} showsVerticalScrollIndicator={false} keyboardShouldPersistTaps="handled">
         <FloatingLabelInput label="Kode Order" placeholder="Kode order (opsional)" value={code} onChangeText={setCode} style={styles.input} />
-        <FloatingLabelInput label="Diminta Oleh" placeholder="Nama pemohon (opsional)" value={reqBy} onChangeText={setReqBy} style={styles.input} />
+        <FloatingLabelInput label="Diminta Oleh" value={outlet ?? ''} onChangeText={() => {}} editable={false} style={[styles.input, styles.inputDisabled]} />
         <FloatingLabelInput label="Catatan" placeholder="Tambahkan catatan... (opsional)" value={notes} onChangeText={setNotes} multiline style={styles.input} />
 
         {/* Items */}
@@ -160,6 +159,7 @@ const styles = StyleSheet.create({
   safe: { flex: 1, backgroundColor: colors.background },
   scroll: { padding: 16 },
   input: { marginBottom: 14 },
+  inputDisabled: { opacity: 0.6 },
 
   itemsSection: { marginTop: 4 },
   itemsHeader: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', marginBottom: 12 },

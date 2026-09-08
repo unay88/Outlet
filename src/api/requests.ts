@@ -25,8 +25,11 @@ export type Request = {
 
 type ApiResponse<T> = { success: boolean; data: T; message?: string };
 
-export async function getRequests(): Promise<Request[]> {
-  const res = await fetch(`${BASE_URL}/api/requests`);
+export async function getRequests(reqBy?: string): Promise<Request[]> {
+  const url = reqBy
+    ? `${BASE_URL}/api/requests?req_by=${encodeURIComponent(reqBy)}`
+    : `${BASE_URL}/api/requests`;
+  const res = await fetch(url);
   if (!res.ok) throw new Error(`HTTP ${res.status}`);
   const json: ApiResponse<Request[]> = await res.json();
   if (!json.success) throw new Error('Failed to fetch requests');

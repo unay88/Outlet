@@ -89,11 +89,12 @@ export default function App() {
         onDeleted={() => navigateWithToast('listOrder', 'Order berhasil dihapus!')}
         onSuccess={msg => navigateWithToast('listOrder', msg)}
       />;
-    if (screen === 'formOrder') return <FormOrderScreen onBack={() => navigate('listOrder')} onSuccess={() => navigateWithToast('listOrder', 'Order berhasil dibuat!')} />;
+    if (screen === 'formOrder') return <FormOrderScreen onBack={() => navigate('listOrder')} onSuccess={() => navigateWithToast('listOrder', 'Order berhasil dibuat!')} outlet={selectedOutlet ?? undefined} />;
     if (screen === 'listOrder') return <ListOrderScreen
       onBack={() => navigate('dashboard')}
       onAddOrder={() => navigate('formOrder')}
       onSelectOrder={item => { setSelectedOrderId(item.id); navigate('detailOrder'); }}
+      outlet={selectedOutlet ?? undefined}
     />;
     if (screen === 'editProduct' && editingProduct)
       return <EditProductScreen
@@ -129,8 +130,8 @@ export default function App() {
     if (screen === 'listStockMove')
       return <ListStockMoveScreen
         onBack={() => navigate('dashboard')}
-        onSelectMove={item => { setSelectedStockMove(item); setStockMoveDetailType('move'); navigate('detailStockMove'); }}
         onSelectMoveProd={item => { setSelectedStockMoveProd(item); setStockMoveDetailType('moveProd'); navigate('detailStockMove'); }}
+        outlet={selectedOutlet ?? undefined}
       />;
     if (screen === 'dashboard') return <DashboardScreen onNavigate={(s: string) => navigate(s as Screen)} />;
     return <WelcomeScreen onGetStarted={outlet => { setSelectedOutlet(outlet); navigate('dashboard'); }} />;

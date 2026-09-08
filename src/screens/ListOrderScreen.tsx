@@ -42,9 +42,10 @@ type Props = {
   onBack?: () => void;
   onAddOrder?: () => void;
   onSelectOrder?: (item: Request) => void;
+  outlet?: string;
 };
 
-export default function ListOrderScreen({ onBack, onAddOrder, onSelectOrder }: Props) {
+export default function ListOrderScreen({ onBack, onAddOrder, onSelectOrder, outlet }: Props) {
   const [requests, setRequests] = useState<Request[]>([]);
   const [loading, setLoading] = useState(true);
   const [refreshing, setRefreshing] = useState(false);
@@ -55,7 +56,7 @@ export default function ListOrderScreen({ onBack, onAddOrder, onSelectOrder }: P
     try {
       isRefresh ? setRefreshing(true) : setLoading(true);
       setError(null);
-      setRequests(await getRequests());
+      setRequests(await getRequests(outlet));
     } catch (e: any) {
       setError(e.message ?? 'Gagal memuat data');
     } finally {

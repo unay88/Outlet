@@ -112,10 +112,6 @@ export default function ListProductScreen({ onBack, onAdd, onSelect, outlet }: P
           />
           <AppText style={styles.emptyTitle}>Belum Ada Produk</AppText>
           <AppText style={styles.emptySubtitle}>Kamu belum menambahkan produk apapun.</AppText>
-          <TouchableOpacity style={styles.emptyBtn} onPress={onAdd} activeOpacity={0.85}>
-            <Text style={styles.emptyBtnIcon}>＋</Text>
-            <AppText style={styles.emptyBtnText}>Tambah Produk</AppText>
-          </TouchableOpacity>
         </View>
       ) : (
         <ScrollView
@@ -189,15 +185,6 @@ const styles = StyleSheet.create({
   emptyIllustration: { width: 220, height: 180, marginBottom: 24 },
   emptyTitle: { fontSize: 20, fontWeight: '700', color: '#1A1A1A', marginBottom: 8 },
   emptySubtitle: { fontSize: 14, color: colors.muted, textAlign: 'center', paddingHorizontal: 40, lineHeight: 22, marginBottom: 28 },
-  emptyBtn: {
-    flexDirection: 'row', alignItems: 'center', gap: 8,
-    backgroundColor: BG, borderRadius: 32,
-    paddingHorizontal: 32, paddingVertical: 16,
-    shadowColor: BG, shadowOffset: { width: 0, height: 4 },
-    shadowOpacity: 0.35, shadowRadius: 8, elevation: 6,
-  },
-  emptyBtnIcon: { fontSize: 18, color: '#fff', fontWeight: '300' },
-  emptyBtnText: { fontSize: 15, fontWeight: '700', color: '#fff' },
 
   center: { flex: 1, alignItems: 'center', justifyContent: 'center', gap: 12 },
   stateIcon: { fontSize: 40 },

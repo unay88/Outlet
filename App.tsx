@@ -48,6 +48,7 @@ export default function App() {
   const [selectedOrderId, setSelectedOrderId] = useState<string | null>(null);
   const [editingOrder, setEditingOrder] = useState<import('./src/api/requests').Request | null>(null);
   const [toast, setToast] = useState<{ message: string; visible: boolean }>({ message: '', visible: false });
+  const [selectedOutlet, setSelectedOutlet] = useState<string | null>(null);
 
   function showToast(message: string) {
     setToast({ message, visible: true });
@@ -131,7 +132,7 @@ export default function App() {
         onSelectMoveProd={item => { setSelectedStockMoveProd(item); setStockMoveDetailType('moveProd'); navigate('detailStockMove'); }}
       />;
     if (screen === 'dashboard') return <DashboardScreen onNavigate={(s: string) => navigate(s as Screen)} />;
-    return <WelcomeScreen onGetStarted={() => navigate('dashboard')} />;
+    return <WelcomeScreen onGetStarted={outlet => { setSelectedOutlet(outlet); navigate('dashboard'); }} />;
   };
 
   return (

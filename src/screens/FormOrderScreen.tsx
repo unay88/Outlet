@@ -1,7 +1,7 @@
 import React, { useEffect, useState } from 'react';
 import {
   SafeAreaView, ScrollView, View, TouchableOpacity,
-  Alert, StyleSheet, Text,
+  Alert, StyleSheet, Text, KeyboardAvoidingView, Platform,
 } from 'react-native';
 import AppText from '../components/atoms/AppText';
 import FloatingLabelInput from '../components/atoms/FloatingLabelInput';
@@ -67,7 +67,8 @@ export default function FormOrderScreen({ onBack, onSuccess }: Props) {
       <ScreenHeader title="Buat Order" onBack={onBack} />
       <LoadingOverlay visible={loading} />
 
-      <ScrollView contentContainerStyle={styles.scroll} showsVerticalScrollIndicator={false} keyboardShouldPersistTaps="handled">
+      <KeyboardAvoidingView style={{ flex: 1 }} behavior={Platform.OS === 'ios' ? 'padding' : 'height'} keyboardVerticalOffset={Platform.OS === 'ios' ? 0 : 24}>
+        <ScrollView contentContainerStyle={styles.scroll} showsVerticalScrollIndicator={false} keyboardShouldPersistTaps="handled">
         <FloatingLabelInput label="Kode Order" placeholder="Kode order (opsional)" value={code} onChangeText={setCode} style={styles.input} />
         <FloatingLabelInput label="Diminta Oleh" placeholder="Nama pemohon (opsional)" value={reqBy} onChangeText={setReqBy} style={styles.input} />
         <FloatingLabelInput label="Catatan" placeholder="Tambahkan catatan... (opsional)" value={notes} onChangeText={setNotes} multiline style={styles.input} />
@@ -150,6 +151,7 @@ export default function FormOrderScreen({ onBack, onSuccess }: Props) {
           <AppText style={styles.submitText}>Kirim Order</AppText>
         </TouchableOpacity>
       </View>
+      </KeyboardAvoidingView>
     </SafeAreaView>
   );
 }
@@ -200,7 +202,6 @@ const styles = StyleSheet.create({
   dropdownStockActive: { color: 'rgba(255,255,255,0.8)' },
 
   footer: {
-    position: 'absolute', bottom: 0, left: 0, right: 0,
     padding: 16, backgroundColor: colors.white,
     borderTopWidth: 1, borderTopColor: colors.background,
   },

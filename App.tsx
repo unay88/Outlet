@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from 'react';
-import { BackHandler, View, StyleSheet } from 'react-native';
+import { BackHandler, View, StyleSheet, StatusBar } from 'react-native';
+import { SafeAreaProvider } from 'react-native-safe-area-context';
 import SplashScreen from './src/screens/SplashScreen';
 import WelcomeScreen from './src/screens/WelcomeScreen';
 import DashboardScreen from './src/screens/DashboardScreen';
@@ -12,19 +13,21 @@ import FormProductScreen from './src/screens/FormProductScreen';
 import DetailProductScreen from './src/screens/DetailProductScreen';
 import EditProductScreen from './src/screens/EditProductScreen';
 import ListStockMoveScreen from './src/screens/ListStockMoveScreen';
+import RekonStokScreen from './src/screens/RekonStokScreen';
 import DetailStockMoveScreen from './src/screens/DetailStockMoveScreen';
 import Toast from './src/components/atoms/Toast';
+import useFCM from './src/hooks/useFCM';
 import { Product } from './src/api/products';
 import { StockMove, StockMoveProduct } from './src/api/stockMoves';
+import { AuthUser, getStoredUser, logout } from './src/api/auth';
 
 type Screen =
   | 'welcome' | 'dashboard'
   | 'listOrder' | 'formOrder' | 'detailOrder' | 'editOrder'
   | 'listProduct' | 'formProduct' | 'detailProduct' | 'editProduct'
-  | 'listStockMove' | 'detailStockMove';
+  | 'listStockMove' | 'detailStockMove' | 'rekonStok';
 
 const BACK_MAP: Partial<Record<Screen, Screen>> = {
-  dashboard:      'welcome',
   listOrder:      'dashboard',
   formOrder:      'listOrder',
   detailOrder:    'listOrder',
@@ -33,13 +36,21 @@ const BACK_MAP: Partial<Record<Screen, Screen>> = {
   formProduct:    'listProduct',
   detailProduct:  'listProduct',
   editProduct:    'detailProduct',
+  rekonStok:      'listProduct',
   listStockMove:  'dashboard',
   detailStockMove: 'listStockMove',
 };
 
 export default function App() {
+  useFCM((data) => {
+    if (data.screen === 'detailRequest' && data.req_id) {
+      setSelectedOrderId(data.req_id);
+      setScreen('detailOrder');
+    }
+  });
   const [showSplash, setShowSplash] = useState(true);
   const [screen, setScreen] = useState<Screen>('welcome');
+  const [authUser, setAuthUser] = useState<AuthUser | null>(null);
   const [selectedProductId, setSelectedProductId] = useState<string | null>(null);
   const [editingProduct, setEditingProduct] = useState<Product | null>(null);
   const [selectedStockMove, setSelectedStockMove] = useState<StockMove | null>(null);
@@ -48,7 +59,27 @@ export default function App() {
   const [selectedOrderId, setSelectedOrderId] = useState<string | null>(null);
   const [editingOrder, setEditingOrder] = useState<import('./src/api/requests').Request | null>(null);
   const [toast, setToast] = useState<{ message: string; visible: boolean }>({ message: '', visible: false });
-  const [selectedOutlet, setSelectedOutlet] = useState<string | null>(null);
+
+  const selectedOutlet = authUser?.outlet ?? null;
+
+  async function handleSplashFinish() {
+    try {
+      const stored = await getStoredUser();
+      if (stored) {
+        setAuthUser(stored);
+        setScreen('dashboard');
+      }
+    } catch {
+      // session tidak bisa dibaca, lanjut ke welcome
+    }
+    setShowSplash(false);
+  }
+
+  async function handleLogout() {
+    try { await logout(authUser?.id ?? ''); } catch {}
+    setAuthUser(null);
+    setScreen('welcome');
+  }
 
   function showToast(message: string) {
     setToast({ message, visible: true });
@@ -72,7 +103,7 @@ export default function App() {
     return () => handler.remove();
   }, [screen]);
 
-  const screenKey = screen + (selectedProductId ?? '') + (editingProduct?.id ?? '') + (selectedStockMove?.id ?? '') + (selectedStockMoveProd?.id ?? '') + (selectedOrderId ?? '') + (editingOrder?.id ?? '');
+  const screenKey = screen + (selectedProductId ?? '') + (editingProduct?.id ?? '') + (selectedStockMove?.id ?? '') + (selectedStockMoveProd?.id ?? '') + (selectedOrderId ?? '') + (editingOrder?.id ?? '') + (authUser?.id ?? '');
 
   const renderScreen = () => {
     if (screen === 'editOrder' && editingOrder)
@@ -114,11 +145,18 @@ export default function App() {
         onBack={() => navigate('listProduct')}
         onSuccess={() => navigateWithToast('listProduct', 'Produk berhasil ditambahkan!')}
       />;
+    if (screen === 'rekonStok')
+      return <RekonStokScreen
+        onBack={() => navigate('listProduct')}
+        outlet={selectedOutlet ?? undefined}
+        onSuccess={msg => navigateWithToast('listProduct', msg)}
+      />;
     if (screen === 'listProduct')
       return <ListProductScreen
         onBack={() => navigate('dashboard')}
         onAdd={() => navigate('formProduct')}
         onSelect={id => { setSelectedProductId(id); navigate('detailProduct'); }}
+        onRekon={() => navigate('rekonStok')}
         outlet={selectedOutlet ?? undefined}
       />;
     if (screen === 'detailStockMove') {
@@ -130,30 +168,33 @@ export default function App() {
     if (screen === 'listStockMove')
       return <ListStockMoveScreen
         onBack={() => navigate('dashboard')}
-        onSelectMoveProd={item => { setSelectedStockMoveProd(item); setStockMoveDetailType('moveProd'); navigate('detailStockMove'); }}
+        onSelect={item => { setSelectedStockMoveProd(item); setStockMoveDetailType('moveProd'); navigate('detailStockMove'); }}
         outlet={selectedOutlet ?? undefined}
       />;
-    if (screen === 'dashboard') return <DashboardScreen onNavigate={(s: string) => navigate(s as Screen)} />;
-    return <WelcomeScreen onGetStarted={outlet => { setSelectedOutlet(outlet); navigate('dashboard'); }} />;
+    if (screen === 'dashboard') return <DashboardScreen onNavigate={(s: string) => navigate(s as Screen)} user={authUser} onLogout={handleLogout} />;
+    return <WelcomeScreen onGetStarted={user => { setAuthUser(user); navigate('dashboard'); }} />;
   };
 
   return (
-    <View style={styles.root}>
-      {showSplash ? (
-        <SplashScreen onFinish={() => setShowSplash(false)} />
-      ) : (
-        <>
-          <View key={screenKey} style={styles.root}>
-            {renderScreen()}
-          </View>
-          <Toast
-            message={toast.message}
-            visible={toast.visible}
-            onHide={() => setToast(t => ({ ...t, visible: false }))}
-          />
-        </>
-      )}
-    </View>
+    <SafeAreaProvider>
+      <StatusBar barStyle="dark-content" backgroundColor="#ffffff" translucent={false} />
+      <View style={styles.root}>
+        {showSplash ? (
+          <SplashScreen onFinish={handleSplashFinish} />
+        ) : (
+          <>
+            <View key={screenKey} style={styles.root}>
+              {renderScreen()}
+            </View>
+            <Toast
+              message={toast.message}
+              visible={toast.visible}
+              onHide={() => setToast(t => ({ ...t, visible: false }))}
+            />
+          </>
+        )}
+      </View>
+    </SafeAreaProvider>
   );
 }
 

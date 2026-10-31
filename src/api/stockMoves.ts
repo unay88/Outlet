@@ -43,6 +43,34 @@ export async function getStockMoves(page = 1, limit = 10): Promise<{ data: Stock
   return { data: json.data, hasMore: page < json.meta.totalPages };
 }
 
+export type StockMoveProductOutlet = {
+  id: string;
+  type: string | null;
+  product_name: string | null;
+  move_type: string | null;
+  ref_type: string | null;
+  outlet: string | null;
+  qty_before: number | null;
+  qty_change: number | null;
+  qty_after: number | null;
+  notes: string | null;
+  price_sub_tot: number | null;
+  created_at: string;
+};
+
+export async function getStockMoveProductOutlets(
+  page = 1, limit = 10, outlet?: string, moveType?: string
+): Promise<{ data: StockMoveProductOutlet[]; hasMore: boolean }> {
+  const params = new URLSearchParams({ page: String(page), limit: String(limit) });
+  if (outlet) params.append('outlet', outlet);
+  if (moveType) params.append('move_type', moveType);
+  const res = await fetch(`${BASE_URL}/api/stock-move-product-outlets?${params}`);
+  if (!res.ok) throw new Error(`HTTP ${res.status}`);
+  const json: PaginatedResponse<StockMoveProductOutlet> = await res.json();
+  if (!json.success) throw new Error('Failed to fetch stock move product outlets');
+  return { data: json.data, hasMore: page < json.meta.totalPages };
+}
+
 export async function getStockMoveProducts(page = 1, limit = 10, outlet?: string): Promise<{ data: StockMoveProduct[]; hasMore: boolean }> {
   const params = new URLSearchParams({ page: String(page), limit: String(limit) });
   if (outlet) params.append('outlet', outlet);

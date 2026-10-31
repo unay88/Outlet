@@ -89,13 +89,46 @@ export async function deleteProduct(id: string): Promise<void> {
   if (!res.ok || !json.success) throw new Error(json.message ?? `HTTP ${res.status}`);
 }
 
-export async function updateProductStock(id: string, qtyAdd: number): Promise<Product> {
-  const res = await fetch(`${BASE_URL}/api/products/${id}/stock`, {
+export type ProductOutlet = {
+  id: string;
+  code: string | null;
+  name: string | null;
+  stock: number | null;
+  min_stock: number | null;
+  outlet: string | null;
+  sell_price: number | null;
+  image: string | null;
+  created_at: string;
+  modified_at: string;
+};
+
+export async function bulkUpdateProductOutletStock(
+  items: { id: string; stock: number; outlet: string }[]
+): Promise<void> {
+  const res = await fetch(`${BASE_URL}/api/product-outlets/bulk-stock`, {
     method: 'PATCH',
     headers: { 'Content-Type': 'application/json' },
-    body: JSON.stringify({ qty_add: qtyAdd }),
+    body: JSON.stringify({ items }),
   });
-  const json: ApiResponse<Product> = await res.json();
+  const json: ApiResponse<null> = await res.json();
   if (!res.ok || !json.success) throw new Error(json.message ?? `HTTP ${res.status}`);
+}
+
+export async function getProductOutlets(outlet?: string): Promise<ProductOutlet[]> {
+  const url = outlet
+    ? `${BASE_URL}/api/product-outlets?outlet=${encodeURIComponent(outlet)}`
+    : `${BASE_URL}/api/product-outlets`;
+  const res = await fetch(url);
+  if (!res.ok) throw new Error(`HTTP ${res.status}`);
+  const json: ApiResponse<ProductOutlet[]> = await res.json();
+  if (!json.success) throw new Error('Failed to fetch product outlets');
+  return json.data;
+}
+
+export async function getProductOutletById(id: string): Promise<ProductOutlet> {
+  const res = await fetch(`${BASE_URL}/api/product-outlets/${id}`);
+  if (!res.ok) throw new Error(`HTTP ${res.status}`);
+  const json: ApiResponse<ProductOutlet> = await res.json();
+  if (!json.success) throw new Error(json.message ?? 'Failed to fetch product outlet');
   return json.data;
 }

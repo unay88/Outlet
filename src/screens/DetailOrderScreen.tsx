@@ -1,6 +1,7 @@
+import { SafeAreaView } from 'react-native-safe-area-context';
 import React, { useCallback, useEffect, useState } from 'react';
 import {
-  SafeAreaView, ScrollView, View, TouchableOpacity, Modal,
+ScrollView, View, TouchableOpacity, Modal,
   StyleSheet, Text, ActivityIndicator, RefreshControl, Image, TextInput,
 } from 'react-native';
 import AppText from '../components/atoms/AppText';
@@ -217,13 +218,13 @@ export default function DetailOrderScreen({ requestId, onBack, onEdit, onDeleted
                     {/* Qty tracker row */}
                     <View style={styles.qtyTrack}>
                       <View style={styles.qtyTrackCol}>
-                        <Image source={require('../assets/Iconly/Curved/Vector (3).png')} style={styles.qtyTrackIcon} resizeMode="contain" />
+                        <Image source={require('../assets/icons/up-svgrepo-com.png')} style={styles.qtyTrackIcon} resizeMode="contain" />
                         <AppText style={styles.qtyTrackLabel}>Diminta</AppText>
                         <AppText style={styles.qtyTrackVal}>{it.qty_req ?? '—'}</AppText>
                       </View>
                       <View style={styles.qtyTrackDivider} />
                       <View style={styles.qtyTrackCol}>
-                        <Image source={require('../assets/Iconly/Curved/Vector (2).png')} style={[styles.qtyTrackIcon, { tintColor: '#2B6CB0' }]} resizeMode="contain" />
+                        <Image source={require('../assets/icons/bag-ok-svgrepo-com.png')} style={[styles.qtyTrackIcon, { tintColor: '#2B6CB0' }]} resizeMode="contain" />
                         <AppText style={styles.qtyTrackLabel}>Disetujui</AppText>
                         <AppText style={[styles.qtyTrackVal, { color: it.qty_app != null ? '#2B6CB0' : colors.subtle }]}>
                           {it.qty_app ?? '—'}
@@ -231,7 +232,7 @@ export default function DetailOrderScreen({ requestId, onBack, onEdit, onDeleted
                       </View>
                       <View style={styles.qtyTrackDivider} />
                       <View style={styles.qtyTrackCol}>
-                        <Image source={require('../assets/Iconly/Curved/Vector (1).png')} style={[styles.qtyTrackIcon, { tintColor: '#553C9A' }]} resizeMode="contain" />
+                        <Image source={require('../assets/icons/up-2-svgrepo-com.png')} style={[styles.qtyTrackIcon, { tintColor: '#553C9A' }]} resizeMode="contain" />
                         <AppText style={styles.qtyTrackLabel}>Diterima</AppText>
                         <AppText style={[styles.qtyTrackVal, { color: it.qty_del != null ? '#553C9A' : colors.subtle }]}>
                           {(isSelesai || !isKirim) && it.qty_del != null ? it.qty_del : '—'}
@@ -271,7 +272,7 @@ export default function DetailOrderScreen({ requestId, onBack, onEdit, onDeleted
               {submitting
                 ? <ActivityIndicator color={colors.white} size="small" />
                 : <View style={styles.selesaiBtnInner}>
-                    <Image source={require('../assets/Iconly/Curved/Vector 2.png')} style={styles.selesaiBtnIcon} resizeMode="contain" />
+                  <Image source={require('../assets/icons/bag-ok-svgrepo-com.png')} style={styles.selesaiBtnIcon} resizeMode="contain" />
                     <AppText style={styles.selesaiBtnText}>Tandai Selesai</AppText>
                   </View>}
             </TouchableOpacity>
@@ -287,7 +288,7 @@ export default function DetailOrderScreen({ requestId, onBack, onEdit, onDeleted
           <TouchableOpacity style={styles.modalSheet} activeOpacity={1}>
             <View style={styles.modalIconWrap}>
               {confirm?.icon === 'check'
-                ? <Image source={require('../assets/Iconly/Curved/Vector 2.png')} style={styles.modalCheckIcon} resizeMode="contain" />
+                ? <Image source={require('../assets/icons/bag-ok-svgrepo-com.png')} style={styles.modalCheckIcon} resizeMode="contain" />
                 : <Text style={styles.modalIconText}>{confirm?.icon}</Text>}
             </View>
             <AppText style={styles.modalTitle}>{confirm?.title}</AppText>
@@ -319,10 +320,10 @@ export default function DetailOrderScreen({ requestId, onBack, onEdit, onDeleted
           >
             {deleting
               ? <ActivityIndicator color={colors.white} size="small" />
-              : <Image source={require('../assets/Iconly/Curved/Vector (1) copy.png')} style={styles.fabIcon} resizeMode="contain" />}
+              : <Image source={require('../assets/icons/bin-svgrepo-com.png')} style={styles.fabIcon} resizeMode="contain" />}
           </TouchableOpacity>
           <TouchableOpacity style={styles.fab} onPress={() => onEdit?.(data)} activeOpacity={0.85}>
-            <Image source={require('../assets/Iconly/Curved/Vector copy.png')} style={styles.fabIcon} resizeMode="contain" />
+            <Image source={require('../assets/icons/edit-3-svgrepo-com.png')} style={styles.fabIcon} resizeMode="contain" />
           </TouchableOpacity>
         </View>
       )}

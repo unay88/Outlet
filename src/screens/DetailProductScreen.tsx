@@ -1,11 +1,12 @@
+import { SafeAreaView } from 'react-native-safe-area-context';
 import React, { useEffect, useState } from 'react';
 import {
-  SafeAreaView, ScrollView, View, TouchableOpacity,
+ScrollView, View, TouchableOpacity,
   ActivityIndicator, Alert, StyleSheet, Text, Image,
 } from 'react-native';
 import AppText from '../components/atoms/AppText';
 import ScreenHeader from '../components/atoms/ScreenHeader';
-import { getProductById, deleteProduct, Product } from '../api/products';
+import { getProductOutletById, ProductOutlet } from '../api/products';
 import { colors } from '../theme';
 
 type Props = {
@@ -16,7 +17,7 @@ type Props = {
 };
 
 export default function DetailProductScreen({ productId, onBack, onEdit, onDeleted }: Props) {
-  const [item, setItem] = useState<Product | null>(null);
+  const [item, setItem] = useState<ProductOutlet | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [deleting, setDeleting] = useState(false);
@@ -26,7 +27,7 @@ export default function DetailProductScreen({ productId, onBack, onEdit, onDelet
   async function fetchData() {
     try {
       setLoading(true); setError(null);
-      setItem(await getProductById(productId));
+      setItem(await getProductOutletById(productId));
     } catch (e: any) { setError(e.message ?? 'Gagal memuat data'); }
     finally { setLoading(false); }
   }
@@ -34,7 +35,7 @@ export default function DetailProductScreen({ productId, onBack, onEdit, onDelet
   function confirmDelete() {
     Alert.alert(
       'Hapus Produk',
-      `Yakin ingin menghapus "${item?.name ?? item?.code}"? Semua detail produk juga akan terhapus.`,
+      `Yakin ingin menghapus "${item?.name ?? item?.code}"?`,
       [
         { text: 'Batal', style: 'cancel' },
         { text: 'Hapus', style: 'destructive', onPress: handleDelete },
@@ -46,7 +47,6 @@ export default function DetailProductScreen({ productId, onBack, onEdit, onDelet
     if (!item) return;
     try {
       setDeleting(true);
-      await deleteProduct(item.id);
       onDeleted?.();
     } catch (e: any) {
       Alert.alert('Gagal Menghapus', e.message ?? 'Terjadi kesalahan.');
@@ -60,7 +60,6 @@ export default function DetailProductScreen({ productId, onBack, onEdit, onDelet
     { label: 'Min. Stok', value: item.min_stock != null ? String(item.min_stock) : '—' },
     { label: 'Outlet', value: item.outlet ?? '—' },
     { label: 'Harga Jual', value: item.sell_price != null ? `Rp ${Number(item.sell_price).toLocaleString('id-ID')}` : '—' },
-    { label: 'Image URL', value: item.image ?? '—', mono: true },
     { label: 'ID', value: item.id, mono: true },
     { label: 'Dibuat', value: new Date(item.created_at).toLocaleString('id-ID') },
     { label: 'Diperbarui', value: new Date(item.modified_at).toLocaleString('id-ID') },
@@ -82,12 +81,10 @@ export default function DetailProductScreen({ productId, onBack, onEdit, onDelet
         </View>
       ) : item ? (
         <ScrollView contentContainerStyle={styles.scroll} showsVerticalScrollIndicator={false}>
-          {/* Image */}
           {item.image ? (
             <Image source={{ uri: item.image }} style={styles.productImage} resizeMode="cover" />
           ) : null}
 
-          {/* Info utama */}
           <View style={styles.card}>
             {fields.map((f, idx) => (
               <View key={f.label}>
@@ -99,29 +96,6 @@ export default function DetailProductScreen({ productId, onBack, onEdit, onDelet
               </View>
             ))}
           </View>
-
-          {/* Details / komposisi */}
-          {item.details.length > 0 && (
-            <>
-              <AppText style={styles.sectionLabel}>KOMPOSISI BAHAN BAKU</AppText>
-              <View style={styles.card}>
-                {item.details.map((d, idx) => (
-                  <View key={d.id}>
-                    <View style={styles.fieldRow}>
-                      <AppText style={styles.fieldLabel}>Bahan #{idx + 1}</AppText>
-                      <View style={styles.detailRight}>
-                        <AppText style={styles.fieldValue}>{d.raw_name ?? d.raw_id}</AppText>
-                        <AppText style={styles.detailMeta}>
-                          {d.unit ?? '—'}{d.conversion != null ? `  ×${d.conversion}` : ''}
-                        </AppText>
-                      </View>
-                    </View>
-                    {idx < item.details.length - 1 && <View style={styles.divider} />}
-                  </View>
-                ))}
-              </View>
-            </>
-          )}
 
           <View style={{ height: 100 }} />
         </ScrollView>

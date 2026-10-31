@@ -1,0 +1,68 @@
+{
+  "project_info": {
+    "project_number": "87171836080",
+    "project_id": "ipprojects-e9be9",
+    "storage_bucket": "ipprojects-e9be9.firebasestorage.app"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:87171836080:android:1ef8d63786fe1d0947f375",
+        "android_client_info": {
+          "package_name": "com.gudangapp"
+        }
+      },
+      "oauth_client": [
+        {
+          "client_id": "87171836080-c2hljoncq3mou36a8g79s3hocsg6pdc6.apps.googleusercontent.com",
+          "client_type": 3
+        }
+      ],
+      "api_key": [
+        {
+          "current_key": "AIzaSyDImHy4HpoEKjZm82QN4w7gU8GfyNalb4Y"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": [
+            {
+              "client_id": "87171836080-c2hljoncq3mou36a8g79s3hocsg6pdc6.apps.googleusercontent.com",
+              "client_type": 3
+            }
+          ]
+        }
+      }
+    },
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:87171836080:android:7d85218ddf0997ed47f375",
+        "android_client_info": {
+          "package_name": "com.outletapp"
+        }
+      },
+      "oauth_client": [
+        {
+          "client_id": "87171836080-c2hljoncq3mou36a8g79s3hocsg6pdc6.apps.googleusercontent.com",
+          "client_type": 3
+        }
+      ],
+      "api_key": [
+        {
+          "current_key": "AIzaSyDImHy4HpoEKjZm82QN4w7gU8GfyNalb4Y"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": [
+            {
+              "client_id": "87171836080-c2hljoncq3mou36a8g79s3hocsg6pdc6.apps.googleusercontent.com",
+              "client_type": 3
+            }
+          ]
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}

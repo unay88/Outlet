@@ -1,6 +1,7 @@
+import { SafeAreaView } from 'react-native-safe-area-context';
 import React, { useEffect, useState } from 'react';
 import {
-  SafeAreaView, ScrollView, View, TouchableOpacity,
+ScrollView, View, TouchableOpacity,
   Alert, StyleSheet, Text,
 } from 'react-native';
 import AppText from '../components/atoms/AppText';

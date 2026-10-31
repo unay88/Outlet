@@ -1,148 +1,144 @@
-import React, { useEffect, useState } from 'react';
+import { SafeAreaView } from 'react-native-safe-area-context';
+import React, { useCallback, useEffect, useRef, useState } from 'react';
 import {
-  SafeAreaView, ScrollView, View, TouchableOpacity,
-  ActivityIndicator, StyleSheet, Image, RefreshControl,
+FlatList, View, TouchableOpacity,
+  ActivityIndicator, StyleSheet, Image, TextInput, RefreshControl,
 } from 'react-native';
 import AppText from '../components/atoms/AppText';
 import ScreenHeader from '../components/atoms/ScreenHeader';
-import { getStockMoveProducts, StockMoveProduct } from '../api/stockMoves';
+import { getStockMoveProductOutlets, StockMoveProductOutlet } from '../api/stockMoves';
 import { colors } from '../theme';
 
 const BG = colors.primary;
+const ICON_ARROW_R = require('../assets/icons/right-svgrepo-com.png');
+const ICON_UP      = require('../assets/icons/send-right-svgrepo-com.png');
+const ICON_DN      = require('../assets/icons/send-left-svgrepo-com.png');
 
-const ICON_HISTORY  = require('../assets/Iconly/Curved/Vector copy 3.png');
-const ICON_ARROW_R  = require('../assets/Iconly/Curved/Vector (1).png');
-const ICON_ARROW_UP = require('../assets/Iconly/Curved/Vector (1) copy 3.png');
-const ICON_ARROW_DN = require('../assets/Iconly/Curved/Vector (3) copy.png');
+const MOVE_TYPES = ['Semua', 'IN', 'OUT'];
 
 function formatDate(iso: string) {
-  const d = new Date(iso);
-  return d.toLocaleString('id-ID', {
+  return new Date(iso).toLocaleString('id-ID', {
     hour: '2-digit', minute: '2-digit',
-    day: 'numeric', month: 'long', year: 'numeric',
+    day: 'numeric', month: 'short', year: 'numeric',
   });
 }
 
 type Props = {
   onBack?: () => void;
-  onSelectMoveProd?: (item: StockMoveProduct) => void;
+  onSelect?: (item: StockMoveProductOutlet) => void;
   outlet?: string;
 };
 
-export default function ListStockMoveScreen({ onBack, onSelectMoveProd, outlet }: Props) {
-  const [moveProds, setMoveProds] = useState<StockMoveProduct[]>([]);
-  const [moveProdsPage, setMoveProdsPage] = useState(1);
-  const [moveProdsHasMore, setMoveProdsHasMore] = useState(true);
-  const [moveProdsLoading, setMoveProdsLoading] = useState(false);
-  const [moveProdsRefreshing, setMoveProdsRefreshing] = useState(false);
-  const [moveProdsError, setMoveProdsError] = useState<string | null>(null);
+export default function ListStockMoveScreen({ onBack, onSelect, outlet }: Props) {
+  const [data, setData] = useState<StockMoveProductOutlet[]>([]);
+  const [page, setPage] = useState(1);
+  const [hasMore, setHasMore] = useState(true);
+  const [loading, setLoading] = useState(false);
+  const [refreshing, setRefreshing] = useState(false);
+  const [error, setError] = useState<string | null>(null);
+  const [search, setSearch] = useState('');
+  const [moveType, setMoveType] = useState('');
+  const debounceRef = useRef<ReturnType<typeof setTimeout> | null>(null);
 
-  useEffect(() => { loadMoveProds(1, true); }, [outlet]);
+  useEffect(() => { load(1, true, search, moveType); }, [outlet]);
 
-  async function loadMoveProds(page: number, reset = false) {
-    if (moveProdsLoading) return;
+  function onSearchChange(text: string) {
+    setSearch(text);
+    if (debounceRef.current) clearTimeout(debounceRef.current);
+    debounceRef.current = setTimeout(() => load(1, true, text, moveType), 400);
+  }
+
+  function onFilterChange(mt: string) {
+    const val = mt === 'Semua' ? '' : mt;
+    setMoveType(val);
+    load(1, true, search, val);
+  }
+
+  async function load(p: number, reset = false, s = search, mt = moveType) {
+    if (loading && !reset) return;
     try {
-      setMoveProdsLoading(true); setMoveProdsError(null);
-      const res = await getStockMoveProducts(page, 10, outlet);
-      setMoveProds(prev => reset || page === 1 ? res.data : [...prev, ...res.data]);
-      setMoveProdsPage(page);
-      setMoveProdsHasMore(res.hasMore);
-    } catch (e: any) {
-      setMoveProdsError(e.message ?? 'Gagal memuat data');
-    } finally { setMoveProdsLoading(false); setMoveProdsRefreshing(false); }
+      setLoading(true); setError(null);
+      const res = await getStockMoveProductOutlets(p, 10, outlet, mt || undefined);
+      const filtered = s
+        ? res.data.filter(i => (i.product_name ?? '').toLowerCase().includes(s.toLowerCase()))
+        : res.data;
+      setData(prev => reset || p === 1 ? filtered : [...prev, ...filtered]);
+      setPage(p); setHasMore(res.hasMore);
+    } catch (e: any) { setError(e.message ?? 'Gagal memuat data'); }
+    finally { setLoading(false); setRefreshing(false); }
   }
 
-  function handleScroll(e: any) {
-    const { layoutMeasurement, contentOffset, contentSize } = e.nativeEvent;
-    const nearBottom = layoutMeasurement.height + contentOffset.y >= contentSize.height - 80;
-    if (!nearBottom) return;
-    if (moveProdsHasMore && !moveProdsLoading) loadMoveProds(moveProdsPage + 1);
-  }
-
-  function onRefresh() {
-    setMoveProdsRefreshing(true); loadMoveProds(1, true);
-  }
-
-  // Determine direction icon based on qty_change or move_type
-  function dirIcon(qtyChange: number | null, moveType: string | null) {
-    const mt = (moveType ?? '').toLowerCase();
-    const isUp = (qtyChange != null && qtyChange > 0) || mt.includes('in') || mt === 'add';
-    return isUp ? ICON_ARROW_UP : ICON_ARROW_DN;
-  }
-
-  function renderMoveProdRow(item: StockMoveProduct) {
-    const label = item.product_name ?? item.product_id ?? '—';
-    const rawLabel = item.raw_name ?? item.raw_id;
-    const qty = item.qty_change != null ? `${item.qty_change > 0 ? '+' : ''}${item.qty_change}` : '—';
-    const qtyColor = (item.qty_change ?? 0) >= 0 ? '#2ECC71' : '#E74C3C';
+  const renderItem = useCallback(({ item }: { item: StockMoveProductOutlet }) => {
+    const isIn = (item.move_type ?? '').toUpperCase() === 'IN';
+    const qty = item.qty_change != null ? `${isIn ? '+' : '-'}${item.qty_change}` : '—';
+    const qtyColor = isIn ? '#2ECC71' : '#E74C3C';
     return (
-      <TouchableOpacity key={item.id} style={styles.row} activeOpacity={0.7} onPress={() => onSelectMoveProd?.(item)}>
-        <View style={styles.iconWrap}>
-          <Image source={ICON_HISTORY} style={styles.iconImg} resizeMode="contain" />
+      <TouchableOpacity style={styles.row} activeOpacity={0.7} onPress={() => onSelect?.(item)}>
+        <View style={[styles.iconWrap, { backgroundColor: isIn ? '#F0FFF4' : '#FFF5F5' }]}>
+          <Image source={isIn ? ICON_UP : ICON_DN} style={[styles.iconImg, { tintColor: qtyColor }]} resizeMode="contain" />
         </View>
-
         <View style={styles.rowBody}>
           <View style={styles.rowTitleRow}>
-            <AppText style={styles.rowTitle} numberOfLines={1}>{label}</AppText>
-            {qty !== '—' && (
-              <View style={[styles.qtyBadge, { backgroundColor: (item.qty_change ?? 0) >= 0 ? '#F0FFF4' : '#FFF5F5' }]}>
-                <Image source={dirIcon(item.qty_change, item.move_type)} style={[styles.dirIcon, { tintColor: qtyColor }]} resizeMode="contain" />
+            <AppText style={styles.rowTitle} numberOfLines={1}>{item.product_name ?? '—'}</AppText>
+            {item.qty_change != null && (
+              <View style={[styles.qtyBadge, { backgroundColor: isIn ? '#F0FFF4' : '#FFF5F5' }]}>
+                <Image source={isIn ? ICON_UP : ICON_DN} style={[styles.dirIcon, { tintColor: qtyColor }]} resizeMode="contain" />
                 <AppText style={[styles.qtyText, { color: qtyColor }]}>{qty}</AppText>
               </View>
             )}
           </View>
-          <AppText style={styles.rowSub} numberOfLines={1}>{`${rawLabel ? rawLabel + '  ·  ' : ''}${formatDate(item.created_at)}`}</AppText>
+          <AppText style={styles.rowSub}>{`${item.move_type ?? '—'}  ·  ${item.ref_type ?? '—'}  ·  ${formatDate(item.created_at)}`}</AppText>
         </View>
-
         <Image source={ICON_ARROW_R} style={styles.arrowIcon} resizeMode="contain" />
       </TouchableOpacity>
     );
-  }
-
-  const isLoading = moveProdsLoading && moveProds.length === 0;
-  const isRefreshing = moveProdsRefreshing;
-  const error = moveProdsError;
-  const loadingMore = moveProdsLoading && moveProds.length > 0;
+  }, []);
 
   return (
     <SafeAreaView style={styles.safe}>
       <ScreenHeader title="Stock Move" onBack={onBack} />
 
-      {isLoading ? (
-        <View style={styles.center}><ActivityIndicator size="large" color={BG} /></View>
-      ) : error ? (
-        <View style={styles.center}>
-          <AppText style={styles.stateIcon}>⚠️</AppText>
-          <AppText style={styles.stateText}>{error}</AppText>
-          <TouchableOpacity style={styles.retryBtn} onPress={onRefresh}>
-            <AppText style={styles.retryText}>Coba Lagi</AppText>
-          </TouchableOpacity>
-        </View>
-      ) : (
-        <ScrollView
-          showsVerticalScrollIndicator={false}
-          onScroll={handleScroll}
-          scrollEventThrottle={200}
-          refreshControl={<RefreshControl refreshing={isRefreshing} onRefresh={onRefresh} colors={[BG]} tintColor={BG} />}
-        >
-          {moveProds.length === 0 ? (
-            <View style={styles.emptyWrap}>
-              <Image source={require('../assets/Group 26780.png')} style={styles.emptyIllustration} resizeMode="contain" />
-              <AppText style={styles.emptyTitle}>Belum Ada Data</AppText>
-              <AppText style={styles.emptySubtitle}>Riwayat pergerakan stok akan muncul di sini.</AppText>
-            </View>
-          ) : (
-            <View style={styles.listCard}>
-              {moveProds.map(renderMoveProdRow)}
-            </View>
-          )}
+      <View style={styles.searchRow}>
+        <TextInput
+          style={styles.searchInput}
+          placeholder="Cari nama produk..."
+          placeholderTextColor={colors.muted}
+          value={search}
+          onChangeText={onSearchChange}
+        />
+      </View>
 
-          {loadingMore && (
-            <View style={styles.loadMoreWrap}><ActivityIndicator size="small" color={BG} /></View>
-          )}
-          <View style={{ height: 40 }} />
-        </ScrollView>
-      )}
+      <View style={styles.filterRow}>
+        {MOVE_TYPES.map(mt => (
+          <TouchableOpacity
+            key={mt}
+            style={[styles.filterChip, (moveType === (mt === 'Semua' ? '' : mt)) && styles.filterChipActive]}
+            onPress={() => onFilterChange(mt)}
+            activeOpacity={0.8}
+          >
+            <AppText style={[styles.filterChipText, (moveType === (mt === 'Semua' ? '' : mt)) && styles.filterChipTextActive]}>{mt}</AppText>
+          </TouchableOpacity>
+        ))}
+      </View>
+
+      <FlatList
+        data={data}
+        keyExtractor={i => i.id}
+        renderItem={renderItem}
+        contentContainerStyle={styles.list}
+        onEndReached={() => { if (hasMore && !loading) load(page + 1); }}
+        onEndReachedThreshold={0.3}
+        refreshControl={<RefreshControl refreshing={refreshing} onRefresh={() => { setRefreshing(true); load(1, true); }} colors={[BG]} tintColor={BG} />}
+        ListEmptyComponent={!loading ? (
+          <View style={styles.emptyWrap}>
+            <Image source={require('../assets/Group 26780.png')} style={styles.emptyIllustration} resizeMode="contain" />
+            <AppText style={styles.emptyTitle}>Belum Ada Data</AppText>
+            <AppText style={styles.emptySubtitle}>Riwayat pergerakan stok outlet akan muncul di sini.</AppText>
+          </View>
+        ) : null}
+        ListFooterComponent={loading ? <ActivityIndicator size="small" color={BG} style={{ margin: 16 }} /> : null}
+      />
+      {error ? <AppText style={styles.errorText}>{error}</AppText> : null}
     </SafeAreaView>
   );
 }
@@ -150,42 +146,31 @@ export default function ListStockMoveScreen({ onBack, onSelectMoveProd, outlet }
 const styles = StyleSheet.create({
   safe: { flex: 1, backgroundColor: '#F5F5F5' },
 
-  listCard: {
-    backgroundColor: '#fff', marginHorizontal: 16, marginTop: 16,
-    borderRadius: 16, overflow: 'hidden',
-    shadowColor: '#000', shadowOffset: { width: 0, height: 1 },
-    shadowOpacity: 0.05, shadowRadius: 6, elevation: 2,
-  },
-  row: {
-    flexDirection: 'row', alignItems: 'center',
-    paddingHorizontal: 16, paddingVertical: 14,
-    borderBottomWidth: 1, borderBottomColor: '#F5F5F5',
-  },
-  iconWrap: {
-    width: 40, height: 40, borderRadius: 20,
-    backgroundColor: '#FFF0F0', alignItems: 'center', justifyContent: 'center',
-    marginRight: 14,
-  },
-  iconImg: { width: 20, height: 20, tintColor: BG },
+  searchRow: { paddingHorizontal: 16, paddingVertical: 10, backgroundColor: '#fff', borderBottomWidth: 1, borderBottomColor: '#F0F0F0' },
+  searchInput: { backgroundColor: '#F5F5F5', borderRadius: 10, paddingHorizontal: 14, paddingVertical: 9, fontSize: 14, color: colors.dark },
+
+  filterRow: { flexDirection: 'row', gap: 8, paddingHorizontal: 16, paddingVertical: 10, backgroundColor: '#fff', borderBottomWidth: 1, borderBottomColor: '#F0F0F0' },
+  filterChip: { paddingHorizontal: 14, paddingVertical: 6, borderRadius: 20, backgroundColor: '#F5F5F5' },
+  filterChipActive: { backgroundColor: BG },
+  filterChipText: { fontSize: 12, fontWeight: '600', color: colors.muted },
+  filterChipTextActive: { color: '#fff' },
+
+  list: { flexGrow: 1 },
+  row: { flexDirection: 'row', alignItems: 'center', backgroundColor: '#fff', paddingHorizontal: 16, paddingVertical: 14, borderBottomWidth: 1, borderBottomColor: '#F5F5F5' },
+  iconWrap: { width: 40, height: 40, borderRadius: 20, alignItems: 'center', justifyContent: 'center', marginRight: 14 },
+  iconImg: { width: 20, height: 20 },
   rowBody: { flex: 1 },
   rowTitleRow: { flexDirection: 'row', alignItems: 'center', gap: 8, marginBottom: 3 },
   rowTitle: { fontSize: 14, fontWeight: '700', color: '#1A1A1A', flex: 1 },
   qtyBadge: { flexDirection: 'row', alignItems: 'center', gap: 3, borderRadius: 8, paddingHorizontal: 7, paddingVertical: 2 },
   dirIcon: { width: 10, height: 10 },
   qtyText: { fontSize: 12, fontWeight: '700' },
-  rowSub: { fontSize: 12, color: colors.muted },
+  rowSub: { fontSize: 11, color: colors.muted },
   arrowIcon: { width: 16, height: 16, tintColor: '#CCCCCC', marginLeft: 8 },
-
-  loadMoreWrap: { alignItems: 'center', paddingVertical: 16 },
-
-  center: { flex: 1, alignItems: 'center', justifyContent: 'center', gap: 8, paddingTop: 80 },
-  stateIcon: { fontSize: 32, color: colors.muted },
-  stateText: { fontSize: 14, color: colors.muted, textAlign: 'center', paddingHorizontal: 32 },
-  retryBtn: { backgroundColor: BG, borderRadius: 12, paddingHorizontal: 24, paddingVertical: 10 },
-  retryText: { color: '#fff', fontWeight: '700', fontSize: 14 },
 
   emptyWrap: { alignItems: 'center', paddingTop: 60, gap: 8, paddingHorizontal: 32 },
   emptyIllustration: { width: 200, height: 160, marginBottom: 8 },
   emptyTitle: { fontSize: 18, fontWeight: '700', color: '#1A1A1A' },
   emptySubtitle: { fontSize: 14, color: colors.muted, textAlign: 'center', lineHeight: 22 },
+  errorText: { textAlign: 'center', color: '#E74C3C', padding: 16 },
 });

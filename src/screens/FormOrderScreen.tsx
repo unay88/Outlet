@@ -1,6 +1,7 @@
+import { SafeAreaView } from 'react-native-safe-area-context';
 import React, { useEffect, useState } from 'react';
 import {
-  SafeAreaView, ScrollView, View, TouchableOpacity,
+ScrollView, View, TouchableOpacity,
   Alert, StyleSheet, Text, KeyboardAvoidingView, Platform,
 } from 'react-native';
 import AppText from '../components/atoms/AppText';
@@ -28,13 +29,14 @@ export default function FormOrderScreen({ onBack, onSuccess, outlet }: Props) {
   }, [outlet]);
 
   function addItem() {
-    setItems(prev => [...prev, { product_id: '', qty_req: '' }]);
-    setExpandedRow(items.length);
+    setItems(prev => [{ product_id: '', qty_req: '' }, ...prev]);
+    setExpandedRow(0);
   }
 
   function removeItem(idx: number) {
     setItems(prev => prev.filter((_, i) => i !== idx));
     if (expandedRow === idx) setExpandedRow(null);
+    else if (expandedRow !== null && expandedRow > idx) setExpandedRow(expandedRow - 1);
   }
 
   function updateItem(idx: number, field: keyof OrderItem, value: string) {

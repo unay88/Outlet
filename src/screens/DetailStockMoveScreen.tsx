@@ -1,6 +1,7 @@
+import { SafeAreaView } from 'react-native-safe-area-context';
 import React from 'react';
 import {
-  SafeAreaView, ScrollView, View, StyleSheet, Image,
+ScrollView, View, StyleSheet, Image,
 } from 'react-native';
 import AppText from '../components/atoms/AppText';
 import ScreenHeader from '../components/atoms/ScreenHeader';
@@ -10,9 +11,8 @@ import { colors } from '../theme';
 const BG = colors.primary;
 
 
-const ICON_HISTORY  = require('../assets/Iconly/Curved/Vector copy 3.png');
-const ICON_ARROW_UP = require('../assets/Iconly/Curved/Vector (1) copy 3.png');
-const ICON_ARROW_DN = require('../assets/Iconly/Curved/Vector (3) copy.png');
+const ICON_IN  = require('../assets/icons/send-right-svgrepo-com.png');
+const ICON_OUT = require('../assets/icons/send-left-svgrepo-com.png');
 
 type Props =
   | { type: 'move'; item: StockMove; onBack?: () => void }
@@ -43,14 +43,15 @@ export default function DetailStockMoveScreen(props: Props) {
   const { type, item, onBack } = props;
 
   const qtyChange = item.qty_change ?? 0;
-  const isUp = qtyChange > 0;
-  const qtyColor = isUp ? '#2ECC71' : '#E74C3C';
-  const dirIcon = isUp ? ICON_ARROW_UP : ICON_ARROW_DN;
+  const moveTypeStr = type === 'move'
+    ? ((item as StockMove).move_type ?? (item as StockMove).type ?? '')
+    : ((item as StockMoveProduct).move_type ?? '');
+  const isOut = moveTypeStr.toUpperCase() === 'OUT';
+  const qtyColor = isOut ? '#E74C3C' : '#2ECC71';
+  const dirIcon = isOut ? ICON_OUT : ICON_IN;
   const qtyStr = qtyChange > 0 ? `+${qtyChange}` : `${qtyChange}`;
 
-  const moveType = type === 'move'
-    ? ((item as StockMove).move_type ?? (item as StockMove).type ?? '—')
-    : ((item as StockMoveProduct).move_type ?? '—');
+  const moveType = moveTypeStr || '—';
 
   const productName = type === 'move'
     ? ((item as StockMove).product_name ?? (item as StockMove).product_id ?? '—')
@@ -64,13 +65,13 @@ export default function DetailStockMoveScreen(props: Props) {
 
         {/* Hero card */}
         <View style={styles.heroCard}>
-          <View style={styles.heroIconWrap}>
-            <Image source={ICON_HISTORY} style={styles.heroIcon} resizeMode="contain" />
+          <View style={[styles.heroIconWrap, { backgroundColor: isOut ? '#FFF5F5' : '#F0FFF4' }]}>
+            <Image source={dirIcon} style={[styles.heroIcon, { tintColor: isOut ? '#E74C3C' : '#2ECC71' }]} resizeMode="contain" />
           </View>
           <AppText style={styles.heroProduct}>{productName}</AppText>
 
           {/* Qty change badge */}
-          <View style={[styles.heroBadge, { backgroundColor: isUp ? '#F0FFF4' : '#FFF5F5' }]}>
+          <View style={[styles.heroBadge, { backgroundColor: isOut ? '#FFF5F5' : '#F0FFF4' }]}>
             <Image source={dirIcon} style={[styles.heroDirIcon, { tintColor: qtyColor }]} resizeMode="contain" />
             <AppText style={[styles.heroBadgeText, { color: qtyColor }]}>{qtyStr}</AppText>
           </View>

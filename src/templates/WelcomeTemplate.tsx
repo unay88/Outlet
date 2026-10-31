@@ -5,19 +5,22 @@ import {
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import AppText from '../components/atoms/AppText';
+import LoginBottomSheet from '../components/atoms/LoginBottomSheet';
 import { getParameter } from '../api/parameters';
+import { AuthUser } from '../api/auth';
 
 const { width, height } = Dimensions.get('window');
 const IMG_HEIGHT = height * 0.52;
 const BG = '#F5A623';
 
-type Props = { onGetStarted?: (outlet: string) => void };
+type Props = { onGetStarted?: (user: AuthUser) => void };
 
 export default function WelcomeTemplate({ onGetStarted }: Props) {
   const [outlets, setOutlets] = useState<string[]>([]);
   const [selected, setSelected] = useState<string | null>(null);
   const [modalVisible, setModalVisible] = useState(false);
   const [loadingOutlets, setLoadingOutlets] = useState(false);
+  const [showLogin, setShowLogin] = useState(false);
 
   useEffect(() => {
     setLoadingOutlets(true);
@@ -41,9 +44,16 @@ export default function WelcomeTemplate({ onGetStarted }: Props) {
       {/* Bottom — white card */}
       <View style={styles.card}>
         <SafeAreaView style={styles.cardInner} edges={['bottom']}>
-          <AppText style={styles.title}>Selamat Datang{'\n'}di Outlet App</AppText>
+          <View style={styles.brandWrap}>
+            <AppText style={styles.appName}>Outlet Hub</AppText>
+            <AppText style={styles.slogan}>Your Store. Your Orders. In Control.</AppText>
+          </View>
+
+          <View style={styles.divider} />
+
+          <AppText style={styles.title}>Kelola Outlet,{' '}<AppText style={[styles.title, { color: BG }]}>Lebih Efisien</AppText></AppText>
           <AppText style={styles.subtitle}>
-            Pilih outlet Anda untuk mulai mengelola order dan memantau stok barang.
+            Pantau stok, kelola pesanan, dan lacak pergerakan barang outlet Anda dalam satu genggaman.
           </AppText>
 
           {/* Outlet Picker */}
@@ -62,16 +72,10 @@ export default function WelcomeTemplate({ onGetStarted }: Props) {
             <Text style={styles.pickerChevron}>▼</Text>
           </TouchableOpacity>
 
-          {/* Dots */}
-          <View style={styles.dots}>
-            <View style={[styles.dot, styles.dotInactive]} />
-            <View style={[styles.dot, styles.dotActive]} />
-          </View>
-
           {/* Button */}
           <TouchableOpacity
             style={[styles.btn, !selected && styles.btnDisabled]}
-            onPress={() => selected && onGetStarted?.(selected)}
+            onPress={() => selected && setShowLogin(true)}
             activeOpacity={0.85}
             disabled={!selected}
           >
@@ -79,6 +83,15 @@ export default function WelcomeTemplate({ onGetStarted }: Props) {
           </TouchableOpacity>
         </SafeAreaView>
       </View>
+
+      {selected && (
+        <LoginBottomSheet
+          visible={showLogin}
+          outlet={selected}
+          onClose={() => setShowLogin(false)}
+          onSuccess={user => { setShowLogin(false); onGetStarted?.(user); }}
+        />
+      )}
 
       {/* Outlet Bottom Sheet Modal */}
       <Modal visible={modalVisible} transparent animationType="slide" onRequestClose={() => setModalVisible(false)}>
@@ -128,9 +141,15 @@ const styles = StyleSheet.create({
     flex: 1, paddingHorizontal: 28, paddingTop: 32, paddingBottom: 16, alignItems: 'center',
   },
 
+  brandWrap: { alignItems: 'center', marginBottom: 16 },
+  appName: { fontSize: 28, fontWeight: '900', color: BG, letterSpacing: 0.5 },
+  slogan: { fontSize: 12, color: '#AAAAAA', fontWeight: '500', marginTop: 4, letterSpacing: 0.3 },
+
+  divider: { width: 40, height: 3, backgroundColor: BG, borderRadius: 2, marginBottom: 16, opacity: 0.3 },
+
   title: {
-    fontSize: 26, fontWeight: '800', color: '#1A1A1A',
-    textAlign: 'center', lineHeight: 34, marginBottom: 14,
+    fontSize: 24, fontWeight: '800', color: '#1A1A1A',
+    textAlign: 'center', lineHeight: 32, marginBottom: 10,
   },
   subtitle: {
     fontSize: 14, color: '#7A7A7A', textAlign: 'center', lineHeight: 22, paddingHorizontal: 4,
@@ -145,13 +164,6 @@ const styles = StyleSheet.create({
   pickerValue: { fontSize: 15, fontWeight: '600', color: '#1A1A1A', flex: 1 },
   pickerPlaceholder: { fontSize: 15, color: '#BDBDBD', flex: 1 },
   pickerChevron: { fontSize: 11, color: '#9E9E9E', marginLeft: 8 },
-
-  dots: {
-    flexDirection: 'row', gap: 6, marginTop: 20, marginBottom: 'auto' as any,
-  },
-  dot: { height: 8, borderRadius: 4 },
-  dotInactive: { width: 8, backgroundColor: '#E0E0E0' },
-  dotActive: { width: 24, backgroundColor: BG },
 
   btn: {
     width: '100%', backgroundColor: BG, borderRadius: 32,

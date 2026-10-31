@@ -12,7 +12,7 @@ export default function ScreenHeader({ title, onBack, right }: Props) {
   return (
     <View style={styles.header}>
       <TouchableOpacity onPress={onBack} hitSlop={{ top: 10, bottom: 10, left: 10, right: 10 }} style={styles.backBtn}>
-        <Image source={require('../../assets/Iconly/Curved/Vector (2).png')} style={styles.backIcon} resizeMode="contain" />
+        <Image source={require('../../assets/icons/left-svgrepo-com.png')} style={styles.backIcon} resizeMode="contain" />
       </TouchableOpacity>
       <AppText style={styles.title}>{title}</AppText>
       <View style={styles.right}>{right ?? null}</View>
